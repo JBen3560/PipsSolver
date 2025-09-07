@@ -328,6 +328,8 @@ void solvePuzzle(const Board& board, RuleMap& ruleMap, Solution solution, Domino
 }
 
 int main(){
+    // TODO: have user input file to read board from
+    
     Board board = setupBoard();
     Dominos dominos = getDominos();
 
