@@ -251,7 +251,7 @@ void solvePuzzle(const Board& board, RuleMap& ruleMap, Solution solution, Domino
             }
             cout << endl;
         }
-        cout << "================================\n";
+        cout << "=========================\n";
         return;
     }
 
