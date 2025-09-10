@@ -1,7 +1,4 @@
-aa......b
-_cc.....b
-..ddefffb
-...eegg..
-...e..g..
-...h..i..
-..hh.ji..
+abb_c_
+.decc.
+.dfff.
+.g..h.

@@ -1,3 +1,7 @@
-ab.
-abc
-dec
+.aab
+aacc
+ddd.
+dee.
+f...
+f...
+f...

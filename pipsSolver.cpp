@@ -5,6 +5,9 @@
 #include <algorithm>
 #include <unordered_map>
 #include <tuple>
+#include <cctype>
+#include <chrono>
+#include <set>
 using namespace std;
 
 typedef vector<vector<tuple<char, int, string>>> Board; // 2d board (rule char, color ID, rule)
@@ -30,9 +33,16 @@ const int colors[15][3] = {{0,0,255},
 
 // Function to get the board rules from the user
 Board setupBoard(){
+    // User inputs number 1-3
+    string fileNum = "";
+    do{
+        cout << "Select a puzzle to solve (1-3): ";
+        getline(cin, fileNum);
+    }while(fileNum != "1" && fileNum != "2" && fileNum != "3");
+
     // Read in the puzzle board
     Board board;
-    ifstream inputFile("puzzle3.txt");
+    ifstream inputFile("puzzle" + fileNum + ".txt");
     string line;
     while(getline(inputFile, line)){
         vector<tuple<char, int, string>> row;
@@ -232,26 +242,41 @@ bool checkRule(int r, int c, const Solution& solution, const string& rule, vecto
     return true;
 }
 
-void solvePuzzle(const Board& board, RuleMap& ruleMap, Solution solution, Dominos dominos, int& numberOfSolution){
+// Helper to serialize a solution board
+string serializeSolution(const Solution& solution) {
+    string s;
+    for (const auto& row : solution) {
+        for (const auto& cell : row) {
+            s += to_string(cell.first) + "," + to_string(cell.second) + ";";
+        }
+        s += "|";
+    }
+    return s;
+}
+
+void solvePuzzle(const Board& board, RuleMap& ruleMap, Solution solution, Dominos dominos, int& numberOfSolution, set<string>& uniqueSolutions){
     // Check if all dominos have been placed (solution found!)
     if(dominos.empty()){
-        numberOfSolution++;
-        cout << "\n=== SOLUTION " << numberOfSolution << " FOUND! ===\n";
-        
-        // Print the solved board with domino values
-        for(int r = 0; r < board.size(); r++){
-            for(int c = 0; c < board[r].size(); c++){
-                if(get<0>(board[r][c]) != '.'){
-                    int value = solution[r][c].first;
-                    int color = solution[r][c].second;
-                    cout << "\033[38;2;" << colors[color][0] << ";" << colors[color][1] << ";" << colors[color][2] << "m" << value << "\033[0m ";
-                }else {
-                    cout << get<0>(board[r][c]) << " ";
+        string serialized = serializeSolution(solution);
+        if (uniqueSolutions.find(serialized) == uniqueSolutions.end()) {
+            uniqueSolutions.insert(serialized);
+            numberOfSolution++;
+            cout << "\n=== SOLUTION " << numberOfSolution << " FOUND! ===\n";
+            // Print the solved board with domino values
+            for(int r = 0; r < board.size(); r++){
+                for(int c = 0; c < board[r].size(); c++){
+                    if(get<0>(board[r][c]) != '.'){
+                        int value = solution[r][c].first;
+                        int color = solution[r][c].second;
+                        cout << "\033[38;2;" << colors[color][0] << ";" << colors[color][1] << ";" << colors[color][2] << "m" << value << "\033[0m ";
+                    }else {
+                        cout << get<0>(board[r][c]) << " ";
+                    }
                 }
+                cout << endl;
             }
-            cout << endl;
+            cout << "=========================\n";
         }
-        cout << "=========================\n";
         return;
     }
 
@@ -269,7 +294,7 @@ void solvePuzzle(const Board& board, RuleMap& ruleMap, Solution solution, Domino
                         if(checkFirst && checkSecond){
                             tuple<int,int,int> tempDomino = dominos[k];
                             dominos.erase(dominos.begin() + k);
-                            solvePuzzle(board, ruleMap, solution, dominos, numberOfSolution);
+                            solvePuzzle(board, ruleMap, solution, dominos, numberOfSolution, uniqueSolutions);
                             dominos.insert(dominos.begin() + k, tempDomino);
                         }
                         solution[r][c] = {-1, -1};
@@ -284,7 +309,7 @@ void solvePuzzle(const Board& board, RuleMap& ruleMap, Solution solution, Domino
                         if(checkFirst && checkSecond){
                             tuple<int,int,int> tempDomino = dominos[k];
                             dominos.erase(dominos.begin() + k);
-                            solvePuzzle(board, ruleMap, solution, dominos, numberOfSolution);
+                            solvePuzzle(board, ruleMap, solution, dominos, numberOfSolution, uniqueSolutions);
                             dominos.insert(dominos.begin() + k, tempDomino);
                         }
                         solution[r][c] = {-1, -1};
@@ -299,7 +324,7 @@ void solvePuzzle(const Board& board, RuleMap& ruleMap, Solution solution, Domino
                         if(checkFirst && checkSecond){
                             tuple<int,int,int> tempDomino = dominos[k];
                             dominos.erase(dominos.begin() + k);
-                            solvePuzzle(board, ruleMap, solution, dominos, numberOfSolution);
+                            solvePuzzle(board, ruleMap, solution, dominos, numberOfSolution, uniqueSolutions);
                             dominos.insert(dominos.begin() + k, tempDomino);
                         }
                         solution[r][c] = {-1, -1};
@@ -314,7 +339,7 @@ void solvePuzzle(const Board& board, RuleMap& ruleMap, Solution solution, Domino
                         if(checkFirst && checkSecond){
                             tuple<int,int,int> tempDomino = dominos[k];
                             dominos.erase(dominos.begin() + k);
-                            solvePuzzle(board, ruleMap, solution, dominos, numberOfSolution);
+                            solvePuzzle(board, ruleMap, solution, dominos, numberOfSolution, uniqueSolutions);
                             dominos.insert(dominos.begin() + k, tempDomino);
                         }
                         solution[r][c] = {-1, -1};
@@ -327,9 +352,7 @@ void solvePuzzle(const Board& board, RuleMap& ruleMap, Solution solution, Domino
     }
 }
 
-int main(){
-    // TODO: have user input file to read board from
-    
+int main(){    
     Board board = setupBoard();
     Dominos dominos = getDominos();
 
@@ -377,7 +400,7 @@ int main(){
         }
     }
 
-    //print color id grid
+    /* //print color id grid
     cout << endl;
     for(const auto& row : board){
         for(const auto& cell : row){
@@ -404,13 +427,18 @@ int main(){
             cout << "(" << pos.first << ", " << pos.second << ") ";
         }
         cout << endl;
-    }
+    } */
 
     // Recursively try each domino positioning
-    solvePuzzle(board, ruleMap, solution, dominos, numOfSolutions);
+    auto start = std::chrono::high_resolution_clock::now();
+    set<string> uniqueSolutions;
+    solvePuzzle(board, ruleMap, solution, dominos, numOfSolutions, uniqueSolutions);
 
     // Print the number of solutions found
     cout << "\nTotal Solutions Found: " << numOfSolutions << endl;
+    auto stop = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
+    cout << "Time taken: " << duration.count() / 1000.0 << " seconds" << endl;
 
     if(numOfSolutions == 0) {
         cout << "\nNo solutions found!" << endl;
